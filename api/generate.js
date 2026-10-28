@@ -68,7 +68,7 @@ export async function POST(request) {
   }
 
   const prompt = [
-    "Traditional police composite portrait, realistic hand-drawn graphite on off-white paper, grayscale pencil strokes and crosshatching. One adult, front-facing, neutral expression; full head and shoulders centered. No text, watermark, signature, props, photo, or cartoon style.",
+    "Traditional police composite portrait, realistic hand-drawn graphite on off-white paper, grayscale pencil strokes and crosshatching. One adult in a vertical portrait, front-facing, neutral expression; full head and shoulders centered. No text, watermark, signature, props, photo, or cartoon style.",
     "Follow only the witness-described visible traits and preserve distinctive details. Do not invent features or infer identity. This is an illustrative investigative aid, not proof of identity.",
     `Witness description: ${description}`,
     `Refinements: jaw ${features.jaw}; eyes ${features.eyes}; nose ${features.nose}; hair ${features.hair}.`,
@@ -82,7 +82,7 @@ export async function POST(request) {
     upstream = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/${MODEL}`, {
       method: "POST",
       headers: { Authorization: `Bearer ${apiToken}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, width: 768, height: 1024, steps: 8 }),
+      body: JSON.stringify({ prompt, steps: 8 }),
       signal: AbortSignal.timeout(55000),
     });
   } catch {
