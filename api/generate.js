@@ -69,13 +69,17 @@ export async function POST(request) {
   }
 
   const prompt = [
-    "Create one traditional police composite portrait sketch, a realistic hand-rendered graphite drawing on clean off-white paper, subtle visible pencil strokes, fine cross-hatching, natural facial proportions, gentle grayscale shading.",
-    "Show one adult person from the shoulders up, front-facing and centered, looking forward with a neutral expression. Include the complete hair and head and a little shoulder area. Detailed and convincing hand-drawn sketch, not a cartoon, vector, painting, 3D render, or photograph. Plain light background; no text, labels, signature, badge, props, or dramatic shadows.",
-    "Use the user's prompt as the source of the person's visible features. Clearly preserve every explicitly described trait and make the stated distinguishing features visually easy to see. Keep the described proportions and spacing of the eyes, nose, jaw, hair, and any witness-reported marks; do not replace them with a generic face. Do not invent marks or infer ethnicity, criminality, or identity. The result is an illustrative investigative aid, not proof of identity.",
-    `User prompt: ${description}`,
-    `Selected refinements: jaw ${features.jaw}; eyes ${features.eyes}; nose ${features.nose}; hair ${features.hair}.`,
+    "Traditional police composite portrait, realistic hand-drawn graphite on off-white paper, grayscale pencil strokes and crosshatching. One adult, front-facing, neutral expression; full head and shoulders centered. No text, watermark, signature, props, photo, or cartoon style.",
+    "Follow only the witness-described visible traits and preserve distinctive details. Do not invent features or infer identity. This is an illustrative investigative aid, not proof of identity.",
+    `Witness description: ${description}`,
+    `Refinements: jaw ${features.jaw}; eyes ${features.eyes}; nose ${features.nose}; hair ${features.hair}.`,
   ].join("\n");
 
+  if (prompt.length > MAX_PROMPT_LENGTH) {
+    const fixedLength = prompt.length - description.length;
+    const maxDescriptionLength = Math.max(0, MAX_PROMPT_LENGTH - fixedLength);
+    return Response.json({ error: `Please shorten the witness description to ${maxDescriptionLength} characters or fewer.` }, { status: 400 });
+  }
   let upstream;
   try {
     upstream = await fetch(`https://api.cloudflare.com/client/v4/accounts/${encodeURIComponent(accountId)}/ai/run/${MODEL}`, {
