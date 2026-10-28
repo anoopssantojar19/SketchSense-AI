@@ -52,10 +52,9 @@ export async function POST(request) {
   }
 
   const description = typeof body.description === "string" ? body.description.trim() : "";
-  if (!description || description.length > MAX_PROMPT_LENGTH) {
-    return Response.json({ error: `Prompt must be between 1 and ${MAX_PROMPT_LENGTH} characters.` }, { status: 400 });
+  if (!description || description.length > 1000) {
+    return Response.json({ error: "Keep the witness description between 1 and 1000 characters." }, { status: 400 });
   }
-
   const allowed = {
     jaw: ["square", "oval", "round", "narrow"],
     eyes: ["deep-set", "wide-set", "close-set", "hooded"],
@@ -75,10 +74,8 @@ export async function POST(request) {
     `Refinements: jaw ${features.jaw}; eyes ${features.eyes}; nose ${features.nose}; hair ${features.hair}.`,
   ].join("\n");
 
-  if (prompt.length > MAX_PROMPT_LENGTH) {
-    const fixedLength = prompt.length - description.length;
-    const maxDescriptionLength = Math.max(0, MAX_PROMPT_LENGTH - fixedLength);
-    return Response.json({ error: `Please shorten the witness description to ${maxDescriptionLength} characters or fewer.` }, { status: 400 });
+  if (prompt.length > MAX_PROMPT_LENGTH || Buffer.byteLength(prompt, "utf8") > MAX_PROMPT_LENGTH) {
+    return Response.json({ error: "The full request is too long. Please shorten the witness description and try again." }, { status: 400 });
   }
   let upstream;
   try {
