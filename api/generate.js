@@ -1,8 +1,10 @@
-export const config = { runtime: "nodejs" };
+export const config = { runtime: "nodejs", maxDuration: 60 };
 
 const MODEL = "@cf/black-forest-labs/flux-1-schnell";
 const MAX_PROMPT_LENGTH = 2048;
 const ALLOWED_ORIGIN = process.env.APP_ORIGIN;
+const SUPABASE_URL = "https://irpyxhrwbugbbuksnzpg.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_LtpsBpxiRSxzeCJYRzCYIw_XndwkSWG";
 
 export async function POST(request) {
   if (ALLOWED_ORIGIN) {
@@ -14,6 +16,26 @@ export async function POST(request) {
     } catch {
       return Response.json({ error: "Invalid request origin." }, { status: 403 });
     }
+  }
+
+  const supabaseUrl = process.env.SUPABASE_URL || SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || SUPABASE_PUBLISHABLE_KEY;
+  const authorization = request.headers.get("authorization") || "";
+  if (!supabaseUrl || !supabaseKey || !authorization.startsWith("Bearer ")) {
+    return Response.json({ error: "Sign in before generating a draft." }, { status: 401 });
+  }
+
+  let userResponse;
+  try {
+    userResponse = await fetch(`${supabaseUrl.replace(/\/$/, "")}/auth/v1/user`, {
+      headers: { apikey: supabaseKey, Authorization: authorization },
+      signal: AbortSignal.timeout(10000),
+    });
+  } catch {
+    return Response.json({ error: "Could not verify your Supabase session." }, { status: 502 });
+  }
+  if (!userResponse.ok) {
+    return Response.json({ error: "Your session has expired. Sign in again." }, { status: 401 });
   }
 
   const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
